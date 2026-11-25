@@ -258,12 +258,15 @@
       var r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
       el.style.setProperty('--mx', x + 'px'); el.style.setProperty('--my', y + 'px');
       if (CS.reduced || !finePointer || !el.classList.contains('magnetic')) return;
-      el.style.transform = 'translate(' + ((x - r.width / 2) * 0.22).toFixed(1) + 'px,' + ((y - r.height / 2) * 0.3).toFixed(1) + 'px)';
+      var dx = x - r.width / 2, dy = y - r.height / 2;
+      el.style.transform = 'translate(' + (dx * 0.22).toFixed(1) + 'px,' + (dy * 0.3).toFixed(1) + 'px)';
+      var lab = el.firstElementChild;   // label floats slightly further: a sense of depth
+      if (lab && lab.tagName === 'SPAN') lab.style.transform = 'translate(' + (dx * 0.1).toFixed(1) + 'px,' + (dy * 0.14).toFixed(1) + 'px)';
     });
-    el.addEventListener('pointerleave', function () { el.style.transform = ''; });
+    el.addEventListener('pointerleave', function () { el.style.transform = ''; var lab = el.firstElementChild; if (lab && lab.tagName === 'SPAN') lab.style.transform = ''; });
   }
   CS.bindMagnetic = bindMagnetic;
-  CS.$$('.btn').forEach(bindMagnetic);
+  CS.$$('.btn,.orb').forEach(bindMagnetic);
 
   /* ---------------- 3D tilt service cards ---------------- */
   CS.$$('[data-tilt]').forEach(function (card) {
@@ -313,6 +316,7 @@
     CS.$$('.phase', tabsBox).forEach(function (b, j) { b.setAttribute('aria-selected', String(j === i)); b.tabIndex = j === i ? 0 : -1; if (j === i && focus) b.focus(); });
     var d = CS.L(DATA.phases[i]);
     CS.$('#phase-num').textContent = '0' + (i + 1);
+    var ring = CS.$('#phase-ring'); if (ring) ring.style.setProperty('--ro', (339.3 * (1 - (i + 1) / DATA.phases.length)).toFixed(1));
     CS.$('#phase-title').textContent = d.t; CS.$('#phase-desc').textContent = d.d;
     CS.$('#phase-panel').setAttribute('aria-labelledby', 'phase-tab-' + i);
     CS.$('#phase-outs').innerHTML = d.o.map(function (o, k) { return '<li style="--i:' + k + '"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>' + CS.esc(o) + '</li>'; }).join('');
@@ -352,6 +356,7 @@
     var b = e.target.closest('.chip'); if (!b) return;
     CS.$$('.kc-filter .chip').forEach(function (c) { var on = c === b; c.classList.toggle('is-on', on); c.setAttribute('aria-pressed', String(on)); });
     CS.$$('.kc').forEach(function (k) { var show = b.dataset.kc === 'all' || k.dataset.topic === b.dataset.kc; k.classList.toggle('is-filtered', !show); if (show) k.classList.add('is-in'); });
+    var kg = CS.$('.kc-grid'); kg.scrollLeft = 0; kg.dispatchEvent(new Event('cs:filter'));
   });
   function updateNotifyLinks() {
     CS.$$('[data-notify]').forEach(function (a) {
@@ -375,6 +380,24 @@
     if (e.target.closest('[data-close-dialog]') || e.target === dlg) { dlg.close ? dlg.close() : dlg.removeAttribute('open'); }
   });
   dlg.addEventListener('close', function () { lastFocus && lastFocus.focus && lastFocus.focus(); });
+
+  /* ---------------- Mobile swipe rails: position dots ---------------- */
+  CS.$$('.svc-grid,.kc-grid').forEach(function (rail) {
+    var dots = doc.createElement('div'); dots.className = 'rail-dots'; dots.setAttribute('aria-hidden', 'true');
+    rail.parentNode.insertBefore(dots, rail.nextSibling);
+    function items() { return Array.prototype.filter.call(rail.children, function (c) { return !c.classList.contains('is-filtered'); }); }
+    function update() {
+      var its = items(), rr = rail.getBoundingClientRect(), best = 0, bd = 1e9;
+      its.forEach(function (it, i) { var r = it.getBoundingClientRect(); var d = Math.abs((r.left + r.width / 2) - (rr.left + rr.width / 2)); if (d < bd) { bd = d; best = i; } });
+      CS.$$('span', dots).forEach(function (d, i) { d.classList.toggle('is-on', i === best); });
+    }
+    function draw() { var n = items().length; if (dots.children.length !== n) dots.innerHTML = new Array(n + 1).join('<span></span>'); update(); }
+    rail.addEventListener('scroll', function () { requestAnimationFrame(update); }, { passive: true });
+    window.addEventListener('resize', draw);
+    CS.onLang(function () { rail.scrollLeft = 0; draw(); });
+    rail.addEventListener('cs:filter', draw);
+    draw();
+  });
 
   /* ---------------- Init ---------------- */
   var y = CS.$('#year'); if (y) y.textContent = new Date().getFullYear();

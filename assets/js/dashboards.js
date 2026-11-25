@@ -34,6 +34,7 @@
       radarChart: 'ملف الجاهزية الرقمية (من 5)', bubbleChart: 'مصفوفة فرص الذكاء الاصطناعي', impact: 'الأثر', feas: 'قابلية التنفيذ',
       roadmap: 'خارطة الطريق المقترحة (وفق قواعد الأثر وقابلية التنفيذ)', h1: 'مكاسب سريعة · 0–6 أشهر', h2: 'بناء القدرات · 6–12 شهرًا', h3: 'التوسع · 12+ شهرًا',
       oppNames: ['أتمتة معالجة المستندات', 'مساعد رقمي لخدمة المستفيدين', 'التنبؤ بالطلب', 'التنبؤ بمخاطر المشاريع', 'البحث المعرفي الذكي', 'تحليل الملاحظات النصية'],
+      csv: 'تنزيل البيانات التجريبية (CSV)', csvNote: 'بيانات تجريبية افتراضية لأغراض العرض فقط — ليست بيانات عملاء', rowHint: 'اختر مشروعًا لإبرازه في الرسم البياني.',
       chartErr: 'تعذّر تحميل مكتبة الرسوم البيانية. تحقّق من الاتصال ثم أعد المحاولة.', retry: 'إعادة المحاولة'
     },
     en: {
@@ -61,6 +62,7 @@
       radarChart: 'Digital readiness profile (out of 5)', bubbleChart: 'AI opportunity matrix', impact: 'Impact', feas: 'Feasibility',
       roadmap: 'Suggested roadmap (rule-based on impact & feasibility)', h1: 'Quick wins · 0–6 months', h2: 'Build · 6–12 months', h3: 'Scale · 12+ months',
       oppNames: ['Document processing automation', 'Digital service assistant', 'Demand forecasting', 'Project risk prediction', 'Intelligent knowledge search', 'Text feedback analytics'],
+      csv: 'Download demo data (CSV)', csvNote: 'Fictional sample data for demonstration only — not client data', rowHint: 'Select a project to highlight it in the chart.',
       chartErr: "The charting library couldn't load. Check your connection and try again.", retry: 'Retry'
     }
   };
@@ -96,18 +98,39 @@
       opts.map(function (o) { return '<button type="button" data-v="' + o[0] + '" aria-pressed="' + (String(o[0]) === String(val)) + '">' + CS.esc(o[1]) + '</button>'; }).join('') + '</div></div>';
   }
   function kpi(label, value, sub, cls) { return '<div class="kpi"><p class="kpi__l">' + CS.esc(label) + '</p><p class="kpi__v ' + (cls || '') + '">' + value + '</p>' + (sub ? '<p class="kpi__s">' + CS.esc(sub) + '</p>' : '') + '</div>'; }
+  /* Animated KPI values: numbers roll up to their value (static for reduced motion) */
+  function countUp(box) {
+    if (CS.reduced || !box) return;
+    CS.$$('.kpi__v', box).forEach(function (v) {
+      var m = v.textContent.match(/^([+]?)([\d,]*\.?\d+)(.*)$/); if (!m) return;
+      var target = parseFloat(m[2].replace(/,/g, '')), dec = (m[2].split('.')[1] || '').length, t0 = performance.now(), final = v.textContent;
+      (function step(now) {
+        var p = Math.min(1, (now - t0) / 800), e = 1 - Math.pow(1 - p, 3);
+        v.textContent = p < 1 ? m[1] + n(target * e, { minimumFractionDigits: dec, maximumFractionDigits: dec }) + m[3] : final;
+        if (p < 1) requestAnimationFrame(step);
+      })(t0);
+    });
+  }
+  function downloadCSV(name, header, rows) {
+    var esc = function (x) { x = String(x == null ? '' : x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+    var csv = '\ufeff' + [[t('csvNote')]].concat([header], rows).map(function (r) { return r.map(esc).join(','); }).join('\r\n');
+    var url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
   function head(title, sub, filters) { return '<div class="dp__bar"><h3 class="dp__title">' + CS.esc(title) + '<small>' + CS.esc(sub) + '</small></h3><div class="dp__filters">' + filters + '</div></div>'; }
   function card(title, id, full, h) { return '<div class="chart-card' + (full ? ' chart-card--full' : '') + '"><h4>' + CS.esc(title) + '</h4><div class="chart-box"' + (h ? ' style="height:' + h + 'px"' : '') + '><canvas id="' + id + '" role="img" aria-label="' + CS.esc(title) + '"></canvas></div></div>'; }
   function segBind(el, id, cb) { el.querySelector('#' + id).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; CS.$$('button', this).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); cb(b.dataset.v); }); }
 
   /* ================= PMO ================= */
-  var pmoState = { pf: 'all', st: 'all', view: 'progress' };
+  var pmoState = { pf: 'all', st: 'all', view: 'progress' }, lastRows = [];
   function renderPMO(el) {
     var s = pmoState, L = CS.lang;
     el.innerHTML = head(t('pmoT'), t('pmoS'),
       select('pmo-pf', t('filterPortfolio'), [['all', t('all')]].concat(t('pf').map(function (p, i) { return [i, p]; })), s.pf) +
       select('pmo-st', t('filterStatus'), [['all', t('all')], [0, t('onTrack')], [1, t('watch')], [2, t('highRisk')]], s.st) +
-      seg('pmo-view', t('filterView'), [['progress', t('viewProgress')], ['budget', t('viewBudget')]], s.view)) +
+      seg('pmo-view', t('filterView'), [['progress', t('viewProgress')], ['budget', t('viewBudget')]], s.view) +
+      '<button type="button" class="btn btn--line btn--sm dp__csv" id="pmo-csv"><svg class="ico" aria-hidden="true"><use href="#i-doc"/></svg><span>' + CS.esc(t('csv')) + '</span></button>') +
       '<div class="kpis" id="pmo-kpis"></div><div class="charts">' + card(t('progressChart'), 'pmo-bar', false, 300) + card(t('statusChart'), 'pmo-donut', false, 300) +
       '<div class="chart-card chart-card--full"><div class="table-wrap" id="pmo-table"></div></div></div>';
     kill('pmo');
@@ -122,7 +145,7 @@
       var ok = rows.filter(function (r) { return r.st === 0; }).length, risk = rows.filter(function (r) { return r.st === 2; }).length;
       var tb = rows.reduce(function (a, r) { return a + r.bud; }, 0), ts = rows.reduce(function (a, r) { return a + r.sp; }, 0);
       el.querySelector('#pmo-kpis').innerHTML = kpi(t('projects'), n(rows.length)) + kpi(t('onTrack'), n(ok), '', 'up') + kpi(t('highRisk'), n(risk), '', risk ? 'warn' : '') +
-        kpi(t('budgetUse'), tb ? n(ts / tb, { style: 'percent' }) : '—', tb ? n(ts, { maximumFractionDigits: 1 }) + ' / ' + n(tb, { maximumFractionDigits: 1 }) + (L === 'ar' ? ' مليون ريال' : ' SAR m') : '');
+        kpi(t('budgetUse'), tb ? n(ts / tb, { style: 'percent' }) : '—', tb ? n(ts, { maximumFractionDigits: 1 }) + ' / ' + n(tb, { maximumFractionDigits: 1 }) + (L === 'ar' ? ' مليون ريال' : ' SAR m') : ''); countUp(el.querySelector('#pmo-kpis'));
       var short = rows.map(function (r) { return (L === 'ar' ? 'مشروع ' + LETTERS.ar[r.i] : 'Project ' + LETTERS.en[r.i]); });
       bar.data.labels = short;
       if (s.view === 'progress') {
@@ -138,13 +161,28 @@
       bar.update();
       donut.data.datasets[0].data = [ok, rows.filter(function (r) { return r.st === 1; }).length, risk]; donut.update();
       var stName = [t('onTrack'), t('watch'), t('highRisk')], stCls = ['ok', 'watch', 'risk'];
-      el.querySelector('#pmo-table').innerHTML = rows.length ? '<table class="ptable"><thead><tr><th scope="col">' + t('project') + '</th><th scope="col">' + t('portfolio') + '</th><th scope="col">' + t('progress') + '</th><th scope="col">' + t('status') + '</th></tr></thead><tbody>' +
-        rows.map(function (r) { return '<tr><td>' + CS.esc(r.name) + '</td><td>' + CS.esc(t('pf')[r.pf]) + '</td><td><div class="pbar"><div class="pbar__t"><div class="pbar__f" style="width:' + r.act + '%;background:' + (r.st === 2 ? C.terra : r.st === 1 ? C.gold : C.navy) + '"></div></div><span>' + n(r.act) + '%</span></div></td><td><span class="status status--' + stCls[r.st] + '">' + stName[r.st] + '</span></td></tr>'; }).join('') + '</tbody></table>'
+      lastRows = rows;
+      el.querySelector('#pmo-table').innerHTML = rows.length ? '<p class="table-hint">' + CS.esc(t('rowHint')) + '</p><table class="ptable"><thead><tr><th scope="col">' + t('project') + '</th><th scope="col">' + t('portfolio') + '</th><th scope="col">' + t('progress') + '</th><th scope="col">' + t('status') + '</th></tr></thead><tbody>' +
+        rows.map(function (r, k) { return '<tr tabindex="0" data-k="' + k + '"><td>' + CS.esc(r.name) + '</td><td>' + CS.esc(t('pf')[r.pf]) + '</td><td><div class="pbar"><div class="pbar__t"><div class="pbar__f" style="width:' + r.act + '%;background:' + (r.st === 2 ? C.terra : r.st === 1 ? C.gold : C.navy) + '"></div></div><span>' + n(r.act) + '%</span></div></td><td><span class="status status--' + stCls[r.st] + '">' + stName[r.st] + '</span></td></tr>'; }).join('') + '</tbody></table>'
         : '<p class="empty">' + t('noData') + '</p>';
     }
     el.querySelector('#pmo-pf').addEventListener('change', function () { s.pf = this.value; update(); });
     el.querySelector('#pmo-st').addEventListener('change', function () { s.st = this.value; update(); });
     segBind(el, 'pmo-view', function (v) { s.view = v; update(); });
+    function pick(tr) {
+      if (!tr) return;
+      CS.$$('#pmo-table tr.is-active', el).forEach(function (x) { x.classList.remove('is-active'); });
+      tr.classList.add('is-active');
+      var k = +tr.dataset.k, act = bar.data.datasets.map(function (_, di) { return { datasetIndex: di, index: k }; });
+      bar.setActiveElements(act); bar.tooltip.setActiveElements(act, { x: 0, y: 0 }); bar.update();
+    }
+    el.querySelector('#pmo-table').addEventListener('click', function (e) { pick(e.target.closest('tr[data-k]')); });
+    el.querySelector('#pmo-table').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target.closest('tr[data-k]')); } });
+    el.querySelector('#pmo-csv').addEventListener('click', function () {
+      var L = CS.lang, stName = [t('onTrack'), t('watch'), t('highRisk')];
+      downloadCSV('cognisteed-pmo-demo-data.csv', [t('project'), t('portfolio'), t('actual') + ' %', t('planned') + ' %', t('budget'), t('spent'), t('status')],
+        lastRows.map(function (r) { return [r.name, t('pf')[r.pf], r.act, r.plan, r.bud, r.sp, stName[r.st]]; }));
+    });
     update();
   }
 
@@ -178,7 +216,7 @@
       bar.update();
       var last = act[act.length - 1], lt = tgt[tgt.length - 1];
       el.querySelector('#ins-kpis').innerHTML = kpi(t('kpiAch'), n(Math.round(last)) + '%', t('target') + ': ' + n(Math.round(lt)) + '%', last >= lt ? 'up' : 'warn') +
-        kpi(t('kpiOn'), n(Math.round(14 + r() * 10)) + ' / ' + n(32)) + kpi(t('initDone'), n(Math.round(m === 6 ? 4 + r() * 4 : 9 + r() * 6))) + kpi(t('dq'), n(Math.round(76 + r() * 18)) + '%');
+        kpi(t('kpiOn'), n(Math.round(14 + r() * 10)) + ' / ' + n(32)) + kpi(t('initDone'), n(Math.round(m === 6 ? 4 + r() * 4 : 9 + r() * 6))) + kpi(t('dq'), n(Math.round(76 + r() * 18)) + '%'); countUp(el.querySelector('#ins-kpis'));
     }
     segBind(el, 'ins-period', function (v) { s.period = v; update(); });
     el.querySelector('#ins-unit').addEventListener('change', function () { s.unit = this.value; update(); });
@@ -211,7 +249,7 @@
       pp.update();
       var avgPre = pre.reduce(function (a, b) { return a + b; }, 0) / pre.length, avgPost = post.reduce(function (a, b) { return a + b; }, 0) / post.length;
       el.querySelector('#lrn-kpis').innerHTML = kpi(t('trainees'), n(s.prog === 'all' ? 186 : Math.round(40 + r() * 40))) + kpi(t('completion'), n(Math.round(78 + r() * 18)) + '%', '', 'up') +
-        kpi(t('satisfaction'), n(+(4 + r() * 0.8).toFixed(1)) + ' / 5') + kpi(t('gain'), '+' + n(Math.round(avgPost - avgPre)) + (CS.lang === 'ar' ? ' نقطة' : ' pts'));
+        kpi(t('satisfaction'), n(+(4 + r() * 0.8).toFixed(1)) + ' / 5') + kpi(t('gain'), '+' + n(Math.round(avgPost - avgPre)) + (CS.lang === 'ar' ? ' نقطة' : ' pts')); countUp(el.querySelector('#lrn-kpis'));
     }
     el.querySelector('#lrn-prog').addEventListener('change', function () { s.prog = this.value; update(); });
     update();
@@ -244,7 +282,7 @@
       var avg = cur.reduce(function (a, b) { return a + b; }, 0) / cur.length, gi = 0;
       cur.forEach(function (c, i) { if (tgt[i] - c > tgt[gi] - cur[gi]) gi = i; });
       var quick = opps.filter(function (o) { return o.x >= 5.5 && o.y >= 5.5; }), build = opps.filter(function (o) { return o.y >= 5.5 && o.x < 5.5; }), scale = opps.filter(function (o) { return o.y < 5.5; });
-      el.querySelector('#ai-kpis').innerHTML = kpi(t('readiness'), n(avg, { maximumFractionDigits: 1 }) + ' / 5') + kpi(t('gap'), CS.esc(t('dims')[gi]), '', 'warn') + kpi(t('opps'), n(opps.length)) + kpi(t('quick'), n(quick.length), '', 'up');
+      el.querySelector('#ai-kpis').innerHTML = kpi(t('readiness'), n(avg, { maximumFractionDigits: 1 }) + ' / 5') + kpi(t('gap'), CS.esc(t('dims')[gi]), '', 'warn') + kpi(t('opps'), n(opps.length)) + kpi(t('quick'), n(quick.length), '', 'up'); countUp(el.querySelector('#ai-kpis'));
       function col(title, list, color) { return '<div class="road-col"><p class="road-col__t"><span style="background:' + color + '"></span>' + CS.esc(title) + '</p><ul>' + (list.length ? list.map(function (o) { return '<li>' + CS.esc(o.name) + '</li>'; }).join('') : '<li class="muted">—</li>') + '</ul></div>'; }
       el.querySelector('#ai-road').innerHTML = col(t('h1'), quick, C.gold) + col(t('h2'), build, C.navy) + col(t('h3'), scale, C.slate);
     }

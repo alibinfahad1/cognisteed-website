@@ -78,6 +78,7 @@ assets/
   js/diagnostic.js      Multi-step strategic diagnostic: rules, radar chart, printable report.
   js/assistant.js       Floating rule-based guide. Not AI, and nothing leaves the browser.
   js/form.js            Validation and honest submission handling.
+  js/ecosystem.js       Interactive SVG map of the six pillars (hover/focus/keyboard, opens the service card).
   js/motion.js          v2 motion layer: intro curtain, decorative cursor, eased anchor scrolling,
                         scroll-lit statement, pinned story sequence, section index rail, hero spotlight.
 ```
@@ -93,7 +94,7 @@ assets/
   1. the `?lang=en` or `?lang=ar` URL parameter;
   2. the visitor's saved choice (localStorage);
   3. Arabic.
-- **Cache busting:** after editing CSS or JS, bump `?v=2.0.0` in `index.html`. Browsers and GitHub's CDN then fetch the new files.
+- **Cache busting:** after editing CSS or JS, bump `?v=2.1.3` in `index.html`. Browsers and GitHub's CDN then fetch the new files.
 
 ---
 
@@ -102,6 +103,7 @@ assets/
 | Feature | Notes |
 |---|---|
 | v2 experience layer | A branded intro curtain. A branded wipe during the Arabic/English switch. A decorative cursor ring on mouse devices; the native cursor is kept. Eased anchor scrolling that any wheel, touch or key input cancels. A sliding nav indicator and a section index rail. Film grain on dark sections. Section titles revealed through a mask. Buttons that fill and swap arrows on hover. |
+| v2.1 interactions | An interactive SVG map of the six pillars (auto-tour, keyboard support, opens the matching card). Click or tap shockwaves on the hero steed, with network nodes that light up near the cursor. A progress ring in the methodology panel. Dark sections open up as they scroll into view. Magnetic buttons whose label travels further than the button. Dashboard KPIs that count up, PMO table rows linked to the chart, and a CSV export of the clearly labelled demo data. On mobile: swipeable service and article rails with position dots, and scrollable dashboard tabs. |
 | Storytelling | The About statement lights up word by word as you scroll. On large screens the name story is pinned and assembles “Cogni + Steed = CogniSteed” step by step. In the hero, the steed scatters into the network as you scroll away. A closing “Strategic Clarity. Decisive Momentum.” band and a giant footer wordmark round off the page. |
 | Cinematic hero | A Canvas particle constellation assembles the CogniSteed horse from the logo. Includes network lines, travelling signal pulses, cursor repulsion and a connected ambient field. Mouse and scroll add parallax. The original artwork is revealed faintly beneath. |
 | Motion | Staggered headline, scroll progress bar, glass navigation that hides on scroll, reveal-on-scroll, magnetic buttons, 3D tilt service cards with expandable details, scroll-drawn methodology timeline. |

@@ -28,7 +28,7 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;display=swap"></noscript>
-<link rel="stylesheet" href="assets/css/styles.css?v=2.0.0">
+<link rel="stylesheet" href="assets/css/styles.css?v=2.1.3">
 <script>
 /* Set language & direction before first paint (no flash). */
 (function(){var d=document.documentElement,l=null;try{var q=new URLSearchParams(location.search).get('lang');l=(q==='en'||q==='ar')?q:localStorage.getItem('cs-lang');}catch(e){}
@@ -252,6 +252,20 @@ setTimeout(function(){d.classList.add('is-loaded');},2600);})();
       <a class="text-link" href="#contact"><span data-i18n="services.discuss">ناقش احتياجك معنا</span> <svg class="ico ico--flip"><use href="#i-arrow"/></svg></a>
     </div>
 
+    <div class="eco reveal" id="eco">
+      <div class="eco__copy">
+        <p class="eco__kicker" data-i18n="pillars.title">حلول متكاملة لمستقبل الأعمال</p>
+        <p class="eco__hint muted" data-i18n="eco.hint">مرّر فوق ركيزة أو اخترها لاستكشافها.</p>
+        <div class="eco__panel" id="eco-panel" aria-live="polite">
+          <span class="eco__num" id="eco-num">01</span>
+          <h3 class="eco__name" id="eco-name"></h3>
+          <ul class="eco__list" id="eco-list"></ul>
+          <button type="button" class="text-link" id="eco-go"><span data-i18n="svc.more">تفاصيل الخدمة</span> <svg class="ico ico--flip" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+      <div class="eco__stage"><svg class="eco__svg" id="eco-svg" viewBox="0 0 680 600" role="group" aria-label="خريطة الركائز الست" data-i18n-attr="aria-label:eco.aria"></svg></div>
+    </div>
+
     <div class="svc-grid" id="svc-grid">
       <!-- Service cards: Arabic markup is the source; English lives in assets/js/i18n.js -->
       <article class="svc reveal" style="--i:0" data-svc="0">
@@ -417,6 +431,7 @@ setTimeout(function(){d.classList.add('is-loaded');},2600);})();
     </div>
     <div class="phase-panel" id="phase-panel" role="tabpanel" aria-live="polite">
       <div class="phase-panel__head">
+        <svg class="phase-ring" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="54"/><circle class="phase-ring__fill" id="phase-ring" cx="60" cy="60" r="54"/></svg>
         <span class="phase-panel__num" id="phase-num" lang="en">01</span>
         <div><p class="phase-panel__label" data-i18n="method.deliverables">المخرجات الرئيسية</p><h3 id="phase-title">الاستكشاف والتشخيص</h3><p id="phase-desc" class="muted">فهم الاحتياجات وتحليل الوضع الراهن</p></div>
       </div>
@@ -671,15 +686,16 @@ setTimeout(function(){d.classList.add('is-loaded');},2600);})();
   </div>
 </dialog>
 
-<script src="assets/js/config.js?v=2.0.0"></script>
-<script src="assets/js/i18n.js?v=2.0.0" defer></script>
-<script src="assets/js/horse-points.js?v=2.0.0" defer></script>
-<script src="assets/js/main.js?v=2.0.0" defer></script>
-<script src="assets/js/hero.js?v=2.0.0" defer></script>
-<script src="assets/js/dashboards.js?v=2.0.0" defer></script>
-<script src="assets/js/diagnostic.js?v=2.0.0" defer></script>
-<script src="assets/js/assistant.js?v=2.0.0" defer></script>
-<script src="assets/js/form.js?v=2.0.0" defer></script>
-<script src="assets/js/motion.js?v=2.0.0" defer></script>
+<script src="assets/js/config.js?v=2.1.3"></script>
+<script src="assets/js/i18n.js?v=2.1.3" defer></script>
+<script src="assets/js/horse-points.js?v=2.1.3" defer></script>
+<script src="assets/js/main.js?v=2.1.3" defer></script>
+<script src="assets/js/hero.js?v=2.1.3" defer></script>
+<script src="assets/js/ecosystem.js?v=2.1.3" defer></script>
+<script src="assets/js/dashboards.js?v=2.1.3" defer></script>
+<script src="assets/js/diagnostic.js?v=2.1.3" defer></script>
+<script src="assets/js/assistant.js?v=2.1.3" defer></script>
+<script src="assets/js/form.js?v=2.1.3" defer></script>
+<script src="assets/js/motion.js?v=2.1.3" defer></script>
 </body>
 </html>

@@ -20,6 +20,7 @@
   var mouse = { x: -9999, y: -9999, active: false, sx: 0, sy: 0 };
   var running = false, visible = true, raf = 0, t0 = performance.now(), introDone = false, lastNow = 0, artFade = 0, simT = 0;
   var scrollY = 0;
+  var shocks = [];   // click / tap shockwaves
 
   var GOLD = '214,173,81', ICE = '207,227,255', WHITE = '255,255,255';
 
@@ -165,6 +166,10 @@
           dx = p.x - mouse.x; dy = p.y - mouse.y; d = dx * dx + dy * dy;
           if (d < R2 && d > 0.01) { var dd = Math.sqrt(d), f = (1 - dd / R); f = f * f * 7 * k; p.vx += dx / dd * f; p.vy += dy / dd * f; }
         }
+        for (var si = 0; si < shocks.length; si++) {
+          var S = shocks[si], sr = S.age * 0.75, dxs = p.x - S.x, dys = p.y - S.y, ds = Math.sqrt(dxs * dxs + dys * dys) || 1, band = Math.abs(ds - sr);
+          if (band < 46) { var fs = (1 - band / 46) * (1 - S.age / 1100) * 4.2 * k; p.vx += dxs / ds * fs; p.vy += dys / ds * fs; }
+        }
         p.vx *= damp; p.vy *= damp; p.x += p.vx * k; p.y += p.vy * k;
         if (Math.abs(hx - p.x) < 2 && Math.abs(hy - p.y) < 2) settled++;
       } else { p.x = p.hx; p.y = p.hy + oy; settled++; }
@@ -207,6 +212,7 @@
     for (i = 0; i < pts.length; i++) {
       p = pts[i]; if (!p || p.b.type !== 0) continue;
       var g = 16 + Math.sin(t * 0.002 + p.ph) * 4;
+      if (mouse.active) { var mdx = p.x - mouse.x, mdy = p.y - mouse.y, md = Math.sqrt(mdx * mdx + mdy * mdy); if (md < 180) g += (1 - md / 180) * 16; }
       ctx.drawImage(glow, p.x - g, p.y - g, g * 2, g * 2);
       ctx.fillStyle = '#f2f8ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.1, 0, 6.283); ctx.fill();
     }
@@ -226,6 +232,13 @@
         }
       }
     }
+    for (i = shocks.length - 1; i >= 0; i--) {
+      var Sh = shocks[i]; Sh.age += dt;
+      if (Sh.age > 1100) { shocks.splice(i, 1); continue; }
+      var life = 1 - Sh.age / 1100;
+      ctx.strokeStyle = 'rgba(' + GOLD + ',' + (0.5 * life).toFixed(3) + ')'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(Sh.x, Sh.y, Sh.age * 0.75, 0, 6.283); ctx.stroke();
+    }
     ctx.globalAlpha = 1;
     if (running && !CS.reduced) raf = requestAnimationFrame(frame);
   }
@@ -237,6 +250,15 @@
   /* ---------- Events ---------- */
   hero.addEventListener('pointermove', function (e) { var r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; mouse.active = true; });
   hero.addEventListener('pointerleave', function () { mouse.active = false; mouse.x = mouse.y = -9999; });
+  hero.addEventListener('pointerdown', function (e) {
+    if (CS.reduced || e.target.closest('a,button,input,select,textarea')) return;
+    var r = canvas.getBoundingClientRect();
+    if (shocks.length < 4) shocks.push({ x: e.clientX - r.left, y: e.clientY - r.top, age: 0 });
+    // a burst of signal pulses from the nearest network node
+    var best = -1, bd = 1e12;
+    pts.forEach(function (p, i) { if (!p || p.b.type !== 0) return; var dx = p.x - (e.clientX - r.left), dy = p.y - (e.clientY - r.top), d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } });
+    if (best > -1) for (var n = 0; n < 3; n++) { var np = spawnPulse(best); if (np) { np.sp *= 1.8; pulses.push(np); } }
+  });
   hero.addEventListener('pointerup', function (e) { if (e.pointerType === 'touch') { mouse.active = false; mouse.x = mouse.y = -9999; } });
   var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { layout(); if (CS.reduced) renderStatic(); }, 120); });
   window.addEventListener('scroll', function () { scrollY = window.scrollY; if (CS.reduced) renderStatic(); }, { passive: true });

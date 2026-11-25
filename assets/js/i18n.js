@@ -20,6 +20,8 @@ window.CS_I18N = {
     "hero.lead": "At CogniSteed, we reshape the future of business through innovative advisory that unites strategic thinking, artificial intelligence and professional project management — enabling organizations to deliver exceptional performance and sustainable impact.",
     "hero.start": "Start Your Project", "hero.scroll": "Scroll down",
     "cta.scroll": "Scroll to explore",
+    "eco.hint": "Hover over or select a pillar to explore it.",
+    "eco.aria": "Map of the six pillars",
     "band.title": "Strategic Clarity.<br><em>Decisive Momentum.</em>",
     "pillars.title": "Integrated solutions for the future of business",
     "pillar.1": "Strategy", "pillar.2": "Intelligent PMO", "pillar.3": "AI", "pillar.4": "Business Development", "pillar.5": "Capability Building", "pillar.6": "Research & Analytics",

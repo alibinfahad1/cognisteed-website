@@ -144,11 +144,21 @@
     if (found) { var r = found.getBoundingClientRect(); railBar.style.setProperty('--rp', clamp((mid - r.top) / r.height, 0, 1).toFixed(3)); }
   }
 
+  /* ---------------- 8. Section entrance: dark panels open up as they arrive ---------------- */
+  var enters = CS.reduced ? [] : CS.$$('.why,.solutions,.cta-band,.contact');
+  enters.forEach(function (s) { s.setAttribute('data-enter', ''); });
+
   /* ---------------- Scroll loop ---------------- */
   var ticking = false;
   function onScroll() {
     ticking = false;
     var vh = window.innerHeight;
+    enters.forEach(function (s) {
+      var t = s.getBoundingClientRect().top;
+      if (t > vh || t < -vh) return;
+      var e = clamp((t - vh * 0.1) / (vh * 0.75), 0, 1);
+      s.style.setProperty('--e', e.toFixed(3));
+    });
     scrubs.forEach(function (s) {
       var r = s.el.getBoundingClientRect();
       var p = CS.reduced ? 1 : clamp((vh * 0.9 - r.top) / (r.height + vh * 0.45), 0, 1);
