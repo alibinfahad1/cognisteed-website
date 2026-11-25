@@ -1,0 +1,10 @@
+{
+  "name": "CogniSteed — Consulting, Training & Business Solutions",
+  "short_name": "CogniSteed",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#102345",
+  "theme_color": "#102345",
+  "icons": [{ "src": "assets/img/mark.webp", "sizes": "197x176", "type": "image/webp" }]
+}

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://alibinfahad1.github.io/cognisteed-website/sitemap.xml
