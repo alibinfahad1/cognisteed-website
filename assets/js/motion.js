@@ -18,10 +18,10 @@
     var t0 = performance.now(), done = false;
     function lift() {
       if (done) return; done = true;
-      setTimeout(function () { root.classList.add('is-loaded'); }, Math.max(0, 750 - (performance.now() - t0)));
+      setTimeout(function () { root.classList.add('is-loaded'); }, Math.max(0, 450 - (performance.now() - t0)));
     }
     var fontsReady = doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve();
-    Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 1300); })]).then(lift, lift);
+    Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 900); })]).then(lift, lift);
   })();
 
   /* ---------------- 2. Eased anchor navigation ---------------- */

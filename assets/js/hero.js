@@ -43,30 +43,37 @@
   var base = [];
   for (var i = 0; i < H.pts.length; i += 3) base.push({ nx: H.pts[i], ny: H.pts[i + 1], type: H.pts[i + 2] });
   function buildLinks() {
+    // Same topology as before, but neighbours are filtered by distance first so only a
+    // handful of candidates are ever sorted (was a full O(n² log n) sort per particle).
     links = []; netLinks = []; adj = base.map(function () { return []; });
     var A = H.aspect, n = base.length, seen = {};
     function key(a, b) { return a < b ? a + '_' + b : b + '_' + a; }
+    function byD(x, y) { return x[0] - y[0]; }
     for (var a = 0; a < n; a++) {
-      var pa = base[a], cand = [];
+      var pa = base[a], isNode = pa.type === 0;
+      var maxD = isNode ? 0.09 : (pa.type === 1 ? 0.0009 : 0.0022);
+      var near = [], nodes = [];
       for (var b = 0; b < n; b++) {
         if (a === b) continue;
         var pb = base[b], dx = (pa.nx - pb.nx) * A, dy = pa.ny - pb.ny, d = dx * dx + dy * dy;
-        cand.push([d, b]);
+        if (d > maxD) continue;
+        if (isNode) { if (pb.type === 0) nodes.push([d, b]); if (d < 0.004) near.push([d, b]); }
+        else near.push([d, b]);
       }
-      cand.sort(function (x, y) { return x[0] - y[0]; });
-      if (pa.type === 0) {
+      near.sort(byD);
+      var k;
+      if (isNode) {
         // Network nodes: long constellation lines to other nodes (like the logo)
-        var c = 0;
-        for (var k = 0; k < cand.length && c < 4; k++) {
-          var bb = cand[k][1]; if (base[bb].type !== 0 || cand[k][0] > 0.09) continue;
-          var kk = key(a, bb); if (!seen[kk]) { seen[kk] = 1; netLinks.push([a, bb]); adj[a].push(bb); adj[bb].push(a); } c++;
+        nodes.sort(byD);
+        for (k = 0; k < nodes.length && k < 4; k++) {
+          var bb = nodes[k][1], kk = key(a, bb);
+          if (!seen[kk]) { seen[kk] = 1; netLinks.push([a, bb]); adj[a].push(bb); adj[bb].push(a); }
         }
-        for (k = 0; k < 6; k++) { var b2 = cand[k][1], k2 = key(a, b2); if (!seen[k2] && cand[k][0] < 0.004) { seen[k2] = 1; links.push([a, b2, 2]); } }
+        for (k = 0; k < near.length && k < 6; k++) { var b2 = near[k][1], k2 = key(a, b2); if (!seen[k2]) { seen[k2] = 1; links.push([a, b2, 2]); } }
       } else {
-        var lim = pa.type === 1 ? 2 : 3, maxD = pa.type === 1 ? 0.0009 : 0.0022;
-        for (k = 0; k < lim; k++) {
-          var b3 = cand[k][1]; if (cand[k][0] > maxD) break;
-          var k3 = key(a, b3); if (seen[k3]) continue; seen[k3] = 1;
+        var lim = pa.type === 1 ? 2 : 3;
+        for (k = 0; k < near.length && k < lim; k++) {
+          var b3 = near[k][1], k3 = key(a, b3); if (seen[k3]) continue; seen[k3] = 1;
           var style = (pa.type === 1 && base[b3].type === 1) ? 0 : (pa.type === 3 || base[b3].type === 3) ? 3 : 1;
           links.push([a, b3, style]);
         }

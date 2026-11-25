@@ -94,7 +94,7 @@ assets/
   1. the `?lang=en` or `?lang=ar` URL parameter;
   2. the visitor's saved choice (localStorage);
   3. Arabic.
-- **Cache busting:** after editing CSS or JS, bump `?v=2.1.3` in `index.html`. Browsers and GitHub's CDN then fetch the new files.
+- **Cache busting:** after editing CSS or JS, bump `?v=2.2.1` in `index.html`. Browsers and GitHub's CDN then fetch the new files.
 
 ---
 
@@ -157,3 +157,20 @@ These items are kept exactly as the original site presents them and should be co
 - Knowledge Center articles (marked "Coming soon"; "Notify me" opens an email to info@cognisteed.com).
 - Final legal Privacy Policy, Terms and Cookie Policy.
 - Smart Solutions remain labelled "In development", as on the original site.
+
+---
+
+## 8. Production notes (v2.2)
+
+- **Content-Security-Policy** is set by a `<meta>` tag in `index.html`, because GitHub Pages can't send custom headers. It allows only:
+  - this site;
+  - `cdn.jsdelivr.net` for Chart.js (pinned and SRI-checked);
+  - Google Fonts;
+  - `formspree.io` for the form.
+
+  The single inline `<script>` in `<head>` and the font `onload` handler are allowed **by hash**. If you edit that inline script, recompute its SHA-256 hash and update `script-src`. Otherwise the language and reduced-motion bootstrap will be blocked.
+- **Formspree activation:** see `assets/js/config.js`. Paste the verified endpoint into `FORM_ENDPOINT`. File uploads stay off (`FORM_SEND_FILE: false`) because Formspree's free plan doesn't accept them. After a successful submission, the visitor is told the file wasn't attached and is given an email link for it.
+- **Social sharing:** `assets/img/og-cognisteed.png` (1200 × 630) was built from the original logo artwork and copy. The app icons in `assets/img/icons/` are PNGs at 32, 180, 192 and 512 px.
+- **Client logos** are WebP (about 44 KB in total, down from about 104 KB as PNG).
+- **SEO:** the canonical link and `og:url` refer to the page itself for each language (`/` and `/?lang=en`). The sitemap lists both language URLs, with `hreflang` alternates and the OG image.
+- **Legal pages:** bilingual Privacy Policy and Terms drafts are kept **outside this repository** (`../cognisteed-legal-drafts/`). They are not published until approved and completed: CR number, registered address, retention period and legal review. The footer currently opens technical notices that describe only what the website does.

@@ -102,6 +102,9 @@
     doc.title = m.title;
     var md = CS.$('meta[name="description"]'); if (md) md.setAttribute('content', m.desc);
     var ol = CS.$('meta[property="og:locale"]'); if (ol) ol.setAttribute('content', lang === 'en' ? 'en_US' : 'ar_SA');
+    // Self-referencing canonical per language, consistent with the hreflang pair
+    var can = CS.$('link[rel="canonical"]'), ogu = CS.$('meta[property="og:url"]');
+    if (can) { var baseUrl = can.getAttribute('data-base') || can.href.split('?')[0]; can.setAttribute('data-base', baseUrl); can.href = baseUrl + (lang === 'en' ? '?lang=en' : ''); if (ogu) ogu.setAttribute('content', can.href); }
   }
   CS.setLang = function (lang, opts) {
     lang = lang === 'en' ? 'en' : 'ar';

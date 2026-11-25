@@ -18,7 +18,7 @@ window.CS_I18N = {
     "cta.consult": "Request a Consultation", "cta.services": "Explore Our Services",
     "hero.title": "Turning strategic vision into <em>intelligent, lasting achievement</em>",
     "hero.lead": "At CogniSteed, we reshape the future of business through innovative advisory that unites strategic thinking, artificial intelligence and professional project management — enabling organizations to deliver exceptional performance and sustainable impact.",
-    "hero.start": "Start Your Project", "hero.scroll": "Scroll down",
+    "hero.start": "Start Your Project",
     "cta.scroll": "Scroll to explore",
     "eco.hint": "Hover over or select a pillar to explore it.",
     "eco.aria": "Map of the six pillars",

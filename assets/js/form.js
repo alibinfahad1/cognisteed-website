@@ -24,6 +24,8 @@
       offT: 'لم يُرسَل طلبك بعد', offD: 'استقبال الطلبات عبر الموقع غير مفعّل حاليًا، ولذلك لم يُرسل أي شيء. يمكنك إرسال الطلب الآن عبر بريدك الإلكتروني إلى ' + EMAIL + ' — جهّزنا الرسالة لك:',
       mail: 'افتح تطبيق البريد برسالة جاهزة', copy: 'انسخ نص الطلب', attachNote: 'ملاحظة: لا يمكن إرفاق الملف تلقائيًا عبر البريد؛ يُرجى إرفاقه يدويًا.',
       okT: 'تم استلام طلبك', okD: 'أكّد الخادم استلام طلبك. سيتواصل معك أحد مستشارينا.', ref: 'رقم الطلب:',
+      fileSkipped: 'لم يُرفَق الملف بالطلب الإلكتروني. يُرجى إرساله عبر البريد الإلكتروني إلى ' + EMAIL + ' مع ذكر اسم جهتك.',
+      sendFile: 'إرسال الملف بالبريد',
       errT: 'تعذّر إرسال الطلب', errD: 'لم يُحفظ طلبك. يمكنك المحاولة مجددًا أو إرسال الطلب عبر البريد الإلكتروني:', retry: 'إعادة المحاولة',
       subject: 'طلب استشارة — ', labels: { name: 'الاسم', org: 'الجهة', title: 'المسمى الوظيفي', email: 'البريد', phone: 'الجوال', sector: 'القطاع', service: 'الخدمة', time: 'المدة المتوقعة', budget: 'الميزانية التقديرية', file: 'ملف مرفق', msg: 'وصف الاحتياج' },
       truncated: '[اختُصر النص لطول الرسالة — يُرجى استكماله]'
@@ -37,6 +39,8 @@
       offT: 'Your request has not been sent yet', offD: 'Online submission is not active yet, so nothing was sent. You can send your request now by email to ' + EMAIL + ' — we have prepared the message for you:',
       mail: 'Open my email app with the message', copy: 'Copy request text', attachNote: 'Note: files cannot be attached automatically by email; please attach yours manually.',
       okT: 'Request received', okD: 'The server confirmed receipt of your request. One of our consultants will contact you.', ref: 'Request number:',
+      fileSkipped: 'Your file was not attached to the online request. Please email it to ' + EMAIL + ' and mention your organization.',
+      sendFile: 'Email the file',
       errT: "Your request couldn't be sent", errD: 'Your request was not saved. You can try again or send it by email:', retry: 'Try again',
       subject: 'Consultation request — ', labels: { name: 'Name', org: 'Organization', title: 'Job title', email: 'Email', phone: 'Mobile', sector: 'Sector', service: 'Service', time: 'Expected timeframe', budget: 'Estimated budget', file: 'Attached file', msg: 'Description' },
       truncated: '[Text shortened for email length — please complete it]'
@@ -140,7 +144,9 @@
     fd.append('email', F.email.value.trim()); fd.append('mobile', F.phone.value.trim()); fd.append('sector', label(F.sector));
     fd.append('service', label(F.service)); fd.append('timeframe', label(F.time)); fd.append('budget', F.budget.value.trim());
     fd.append('message', F.msg.value.trim()); fd.append('language', CS.lang); fd.append('consent', 'yes'); fd.append('_subject', m('subject') + F.org.value.trim());
-    if (CFG.FORM_SEND_FILE !== false && F.file.files && F.file.files[0]) fd.append('attachment', F.file.files[0]);
+    fd.append('_replyto', F.email.value.trim());   // Formspree: reply goes straight to the requester
+    var hasFile = !!(F.file.files && F.file.files[0]), fileSent = hasFile && CFG.FORM_SEND_FILE === true;
+    if (fileSent) fd.append('attachment', F.file.files[0]);
 
     var lbl = submitBtn.querySelector('span'), orig = lbl.textContent; submitBtn.disabled = true; submitBtn.setAttribute('aria-busy', 'true'); lbl.textContent = m('sending');
     var ctrl = window.AbortController ? new AbortController() : null, to = setTimeout(function () { ctrl && ctrl.abort(); }, 30000);
@@ -151,7 +157,8 @@
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         var ref = r.json && (r.json.reference || r.json.id || r.json.request_id);
-        setStatus('ok', '<h3>' + CS.esc(m('okT')) + '</h3><p>' + CS.esc(m('okD')) + '</p>' + (ref ? '<p><strong>' + CS.esc(m('ref')) + '</strong> <span dir="ltr">' + CS.esc(ref) + '</span></p>' : ''));
+        var skipped = hasFile && !fileSent ? '<p style="margin-top:10px">' + CS.esc(m('fileSkipped')) + '</p><a class="btn btn--line btn--sm" href="mailto:' + EMAIL + '?subject=' + encodeURIComponent(m('subject') + F.org.value.trim()) + '">' + CS.esc(m('sendFile')) + '</a>' : '';
+        setStatus('ok', '<h3>' + CS.esc(m('okT')) + '</h3><p>' + CS.esc(m('okD')) + '</p>' + skipped + (ref ? '<p><strong>' + CS.esc(m('ref')) + '</strong> <span dir="ltr">' + CS.esc(ref) + '</span></p>' : ''));
         form.reset(); counter.textContent = '0'; var d = document.getElementById('form-diag'); if (d) d.hidden = true;
         Object.keys(ERR).forEach(function (k) { show(k, ''); }); touched = {};
       })
